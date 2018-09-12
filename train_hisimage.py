@@ -16,11 +16,8 @@ import shutil
 from torchvision.datasets import ImageFolder
 from torchvision import transforms
 import PIL
-from imgaug import augmenters as iaa
-import imgaug as ia
-from tqdm import tqdm
-from gmloss import LGMLoss
-
+from averagemeter import AverageMeter
+from ncrf import CRFResNet
 
 MAIN_DIR = os.getcwd()
 DATA_DIR = os.path.join(MAIN_DIR, 'breaKHis_patient_binary')
@@ -39,24 +36,6 @@ def save_checkpoint(state, is_best, filename='checkpoint.path.tar'):
     torch.save(state, os.path.join(MAIN_DIR, filename))
     if is_best:
         shutil.copyfile(filename, 'model_best.path.tar')
-
-
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
 
 
 def accuracy(output, target):
@@ -124,18 +103,20 @@ def validate(val_loader, model, criterion, print_freq=50):
     return losses, percent_acc
 
 
-class ImageTransform:
-    """
-    Use imgaug library to do image augmentation.
-    """
-    def __init__(self):
-        self.aug = iaa.Sequential([
-            iaa.Fliplr(0.5),
-        ])
-
-    def __call__(self, img):
-        img = np.array(img)
-        return self.aug.augment_image(img)
+def set_model():
+    if Config.backbone == 'resnet18':
+        model = resnet.resnet18(num_class=Config.out_class)
+    if Config.backbone == 'resnet34':
+        model = resnet.resnet34(num_class=Config.out_class)
+    if Config.backbone == 'resnet50':
+        model = resnet.resnet50(num_class=Config.out_class)
+    if Config.backbone == 'ncrf18':
+        model = CRFResNet.resnet18(num_class=Config.out_class)
+    if Config.backbone == 'ncrf34':
+        model = CRFResNet.resnet34(num_class=Config.out_class)
+    if Config.backbone == 'ncrf50':
+        model = CRFResNet.resnet50(num_class=Config.out_class)
+    return model
 
 
 def main():
@@ -146,7 +127,8 @@ def main():
     workers = Config.workers
     global best_val_acc, best_test_acc
     Config.distributed = Config.gpu_count > 4 # TODO!
-    model = resnet.resnet18(num_class=Config.out_class)
+
+    model = set_model()
     #if Config.gpu is not None:
     model = model.cuda()
     if Config.gpu_count > 1:
