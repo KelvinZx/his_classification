@@ -152,8 +152,8 @@ def main():
     if Config.gpu_count > 1:
         model = torch.nn.DataParallel(model).cuda()
 
-    #criterion = nn.CrossEntropyLoss().cuda()
-    criterion = LGMLoss(num_classes=Config.out_class, feat_dim=128).cuda()
+    criterion = nn.CrossEntropyLoss().cuda()
+    #criterion = LGMLoss(num_classes=Config.out_class, feat_dim=128).cuda()
     optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.0001)
 
     train_dir = os.path.join(DATA_DIR, 'train')
@@ -161,7 +161,7 @@ def main():
     test_dir = os.path.join(DATA_DIR, 'test')
 
     TRANSFORM_IMG = transforms.Compose([
-        transforms.Resize((256,256)),
+        #transforms.Resize((256,256)),
         #ImageTransform(),
         #lambda x: PIL.Image.fromarray(x),
         transforms.ToTensor(),
