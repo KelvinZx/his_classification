@@ -63,17 +63,9 @@ def accuracy(output, target):
     with torch.no_grad():
         _, predicted = torch.max(output.data, 1)
         total += target.size(0)
-        print(predicted)
-        print(target)
         correct += (predicted == target).sum().item()
-        print(total, correct)
     percent_acc = 100 * correct/total
     return percent_acc
-
-
-def torch_accuracy(output, labels):
-    outputs = torch.argmax(output, axis=1)
-    return np.sum(outputs==labels)/float(labels.size)
 
 
 def train_epoch(data_loader, model, criterion, optimizer, epoch, print_freq=50):
