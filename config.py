@@ -18,8 +18,9 @@ class Config(object):
                         help='number of data loading workers (default: 4)')
     parser.add_argument("--gpu", default=None, type=str,
                         help='set gpu if no data parallel are using(default: None)')
+    parser.add_argument("class_num", default=2, type=int)
     args = parser.parse_args()
-
+    class_num = args.num_class
     resume = args.resume
     momentum = args.momentum
     backbone = args.backbone

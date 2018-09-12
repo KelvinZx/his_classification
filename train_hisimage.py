@@ -153,7 +153,7 @@ def main():
     workers = Config.workers
     global best_val_acc, best_test_acc
     Config.distributed = Config.gpu_count > 4 # TODO!
-    model = resnet.resnet50()
+    model = resnet.resnet50(num_class=Config.class_num)
     #if Config.gpu is not None:
     model = model.cuda()
     if Config.gpu_count > 1:
