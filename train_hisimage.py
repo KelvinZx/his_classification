@@ -91,8 +91,8 @@ def train_epoch(data_loader, model, criterion, optimizer, epoch, print_freq=50):
 
         time_end = time.time() - time_now
         if batch_idx % print_freq == 0:
-            print('Round: {}, Time: {}'.format(batch_idx, np.round(time_end, 2)))
-            print('Loss: val:{} avg:{} Acc: val:{} avg:{}'.format(losses.val, losses.avg,
+            print('Training Round: {}, Time: {}'.format(batch_idx, np.round(time_end, 2)))
+            print('Training Loss: val:{} avg:{} Acc: val:{} avg:{}'.format(losses.val, losses.avg,
                                                                   percent_acc.val, percent_acc.avg))
     return losses, percent_acc
 
@@ -116,8 +116,8 @@ def validate(val_loader, model, criterion, print_freq=50):
 
             time_end = time.time() - time_now
             if batch_idx % print_freq == 0:
-                print('Round: {}, Time: {}'.format(batch_idx, np.round(time_end, 2)))
-                print('Loss: val:{} avg:{} Acc: val:{} avg:{}'.format(losses.val, losses.avg,
+                print('Validation Round: {}, Time: {}'.format(batch_idx, np.round(time_end, 2)))
+                print('Validation Loss: val:{} avg:{} Acc: val:{} avg:{}'.format(losses.val, losses.avg,
                                                                       percent_acc.val, percent_acc.avg))
     return losses, percent_acc
 
@@ -180,7 +180,7 @@ def main():
         adjust_learing_rate(optimizer, epoch)
         train_losses, train_acc = train_epoch(train_loader, model, criterion, optimizer, epoch)
         val_losses, val_acc = validate(val_loader, model, criterion)
-        is_best = val_acc > best_val_acc
+        is_best = val_acc.avg > best_val_acc
         print('>>>>>>>>>>>>>>>>>>>>>>')
         print('train loss: {}, train acc: {}, valid loss: {}, valid acc: {}'.format(train_losses.avg, train_acc.avg,
                                                                                     val_losses.avg, val_acc.avg))
