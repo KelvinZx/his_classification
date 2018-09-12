@@ -57,19 +57,19 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def torch_accuracy(output, target):
+def accuracy(output, target):
     total = 0
     correct = 0
     with torch.no_grad():
-        _, predicted = torch.max(output.data, 1)
+        _, predicted = torch.argmax(output.data, 1)
         total += target.size(0)
         correct += (predicted == target).sum().item()
-    percent_acc = 100 * correct/total
+        percent_acc = 100 * correct/total
     return percent_acc
 
 
-def accuracy(output, labels):
-    outputs = np.argmax(output, axis=1)
+def torch_accuracy(output, labels):
+    outputs = torch.argmax(output, axis=1)
     return np.sum(outputs==labels)/float(labels.size)
 
 
