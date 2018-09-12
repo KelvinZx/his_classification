@@ -61,7 +61,7 @@ def accuracy(output, target):
     total = 0
     correct = 0
     with torch.no_grad():
-        _, predicted = torch.argmax(output.data, 1)
+        predicted = torch.argmax(output.data, 1)
         total += target.size(0)
         correct += (predicted == target).sum().item()
         percent_acc = 100 * correct/total
