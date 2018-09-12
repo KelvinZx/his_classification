@@ -61,10 +61,11 @@ def accuracy(output, target):
     total = 0
     correct = 0
     with torch.no_grad():
-        predicted = torch.argmax(output.data, 1)
+        _, predicted = torch.max(output.data, 1)
         total += target.size(0)
         correct += (predicted == target).sum().item()
-        percent_acc = 100 * correct/total
+        print(total, correct)
+    percent_acc = 100 * correct/total
     return percent_acc
 
 
@@ -108,7 +109,7 @@ def validate(val_loader, model, criterion, print_freq=50):
     percent_acc = AverageMeter()
     with torch.no_grad():
         time_now = time.time()
-        for batch_idx, (data, target) in val_loader:
+        for batch_idx, (data, target) in enumerate(val_loader):
             data = data.cuda()
             target = target.cuda()
 

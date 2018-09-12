@@ -7,7 +7,7 @@ class Config(object):
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu_count", default=1, type=int)
-    parser.add_argument("--image_per_gpu", type=int, default=4)
+    parser.add_argument("--image_per_gpu", type=int, default=64)
     parser.add_argument("--epoch", default=300, type=int)
     parser.add_argument("--backbone", default='xception', type=str)
     parser.add_argument("--lr", default=0.01, type=float)
