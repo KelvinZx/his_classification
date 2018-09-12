@@ -153,7 +153,7 @@ def main():
         model = torch.nn.DataParallel(model).cuda()
 
     #criterion = nn.CrossEntropyLoss().cuda()
-    criterion = LGMLoss(num_classes=Config.out_class, feat_dim=256).cuda()
+    criterion = LGMLoss(num_classes=Config.out_class, feat_dim=128).cuda()
     optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.0001)
 
     train_dir = os.path.join(DATA_DIR, 'train')
