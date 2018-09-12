@@ -26,8 +26,9 @@ DATA_DIR = os.path.join(MAIN_DIR, 'breaKHis_patient_binary')
 best_val_acc = 0
 best_test_acc = 0
 
+
 def adjust_learing_rate(opt, epoch):
-    lr = Config.lr * (0.1 ** epoch//30) #reduce 10 percent every 30 epoch
+    lr = Config.lr * (0.1 ** epoch//50) #reduce 10 percent every 50 epoch
     for param_group in opt.param_groups:
         param_group['lr'] = lr
 
@@ -56,7 +57,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def accuracy(output, target):
+def torch_accuracy(output, target):
     total = 0
     correct = 0
     with torch.no_grad():
@@ -67,7 +68,12 @@ def accuracy(output, target):
     return percent_acc
 
 
-def train_epoch(data_loader, model, criterion, optimizer, epoch, print_freq=1):
+def accuracy(output, labels):
+    outputs = np.argmax(output, axis=1)
+    return np.sum(outputs==labels)/float(labels.size)
+
+
+def train_epoch(data_loader, model, criterion, optimizer, epoch, print_freq=50):
     losses = AverageMeter()
     percent_acc = AverageMeter()
     model.train()
@@ -79,19 +85,24 @@ def train_epoch(data_loader, model, criterion, optimizer, epoch, print_freq=1):
         output = model(data)
         loss = criterion(output, target)
         losses.update(loss.item(), data.size(0))
+
         acc = accuracy(output, target)
         percent_acc.update(acc, data.size(0))
+
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         time_end = time.time() - time_now
-        print('Round: {}, Time: {}'.format(batch_idx, np.round(time_end, 2)))
-        print('Loss: val:{} avg:{} Acc: val:{} avg:{}'.format(losses.val, losses.avg, percent_acc.val, percent_acc.avg))
+        if batch_idx % print_freq == 0:
+            print('Round: {}, Time: {}'.format(batch_idx, np.round(time_end, 2)))
+            print('Loss: val:{} avg:{} Acc: val:{} avg:{}'.format(losses.val, losses.avg,
+                                                                  percent_acc.val, percent_acc.avg))
+    return losses, percent_acc
 
 
-def validate(val_loader, model, criterion, print_freq=1):
+def validate(val_loader, model, criterion, print_freq=50):
     model.eval()
     losses = AverageMeter()
     percent_acc = AverageMeter()
@@ -105,14 +116,15 @@ def validate(val_loader, model, criterion, print_freq=1):
             loss = criterion(output, target)
             losses.update(loss.item(), data.size(0))
 
-            #acc = accuracy(output, target)
-            #percent_acc.update(acc, data.size(0))
+            acc = accuracy(output, target)
+            percent_acc.update(acc, data.size(0))
 
             time_end = time.time() - time_now
             if batch_idx % print_freq == 0:
                 print('Round: {}, Time: {}'.format(batch_idx, np.round(time_end, 2)))
-                #print('Loss: val:{} avg:{} Acc: val:{} avg:{}'.format(losses.val, losses.avg, percent_acc.val, percent_acc.avg))
-    return percent_acc.avg
+                print('Loss: val:{} avg:{} Acc: val:{} avg:{}'.format(losses.val, losses.avg,
+                                                                      percent_acc.val, percent_acc.avg))
+    return losses, percent_acc
 
 
 
@@ -146,9 +158,11 @@ def main():
 
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.0001)
+
     train_dir = os.path.join(DATA_DIR, 'train')
     val_dir = os.path.join(DATA_DIR, 'val')
     test_dir = os.path.join(DATA_DIR, 'test')
+
     TRANSFORM_IMG = transforms.Compose([
         transforms.Resize((256,256)),
         #ImageTransform(),
@@ -157,25 +171,31 @@ def main():
         #transforms.Normalize(mean=[0.485, 0.456, 0.406],
          #                    std=[0.229, 0.224, 0.225])
     ])
+
     train_loader = DataLoader(ImageFolder(root=train_dir, transform=TRANSFORM_IMG),
                               batch_size=batch_size, shuffle=True, pin_memory=True)
-    print(len(ImageFolder(root=train_dir, transform=TRANSFORM_IMG)))
     val_loader = DataLoader(ImageFolder(root=val_dir, transform=TRANSFORM_IMG),
-                            batch_size=batch_size, shuffle=True,pin_memory=True)
+                            batch_size=batch_size, shuffle=True, pin_memory=True)
     test_loader = DataLoader(ImageFolder(root=test_dir, transform=TRANSFORM_IMG),
-                            batch_size=batch_size, shuffle=True,pin_memory=True)
+                             batch_size=batch_size, shuffle=True, pin_memory=True)
 
     for epoch in range(EPOCHS):
         adjust_learing_rate(optimizer, epoch)
-        train_epoch(train_loader, model, criterion, optimizer, epoch)
-        val_acc = validate(val_loader, model, criterion, print_freq=1)
+        train_losses, train_acc = train_epoch(train_loader, model, criterion, optimizer, epoch)
+        val_losses, val_acc = validate(val_loader, model, criterion)
         #test_acc = validate(test_loader, model, criterion, print_freq=1)
-        print('The best val acc: {}, this epoch acc: {}'.format(best_val_acc, val_acc))
         is_best = val_acc > best_val_acc
+        print('>>>>>>>>>>>>>>>>>>>>>>')
+        print('train loss: {}, train acc: {}, valid loss: {}, valid acc: {}'.format(train_losses.avg, train_acc.avg,
+                                                                                    val_losses.avg, val_acc.avg))
+        print('>>>>>>>>>>>>>>>>>>>>>>')
         save_checkpoint({'epoch': epoch + 1,
                          'state_dict': model.state_dict(),
                          'best_val_acc': best_val_acc,
                          'optimizer': optimizer.state_dict(),}, is_best)
+    _, test_acc = validate(test_loader, model, criterion)
+    print('Test accuracy: {}'.format(test_acc))
+
 
 if __name__ == '__main__':
     main()
