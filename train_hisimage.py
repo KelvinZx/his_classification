@@ -161,7 +161,7 @@ def main():
     test_dir = os.path.join(DATA_DIR, 'test')
 
     TRANSFORM_IMG = transforms.Compose([
-        #transforms.Resize((256,256)),
+        transforms.Resize((700, 460)),
         #ImageTransform(),
         #lambda x: PIL.Image.fromarray(x),
         transforms.ToTensor(),
