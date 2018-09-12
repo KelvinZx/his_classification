@@ -130,7 +130,6 @@ def validate(val_loader, model, criterion, print_freq=50):
     return losses, percent_acc
 
 
-
 class ImageTransform:
     """
     Use imgaug library to do image augmentation.
@@ -153,7 +152,7 @@ def main():
     workers = Config.workers
     global best_val_acc, best_test_acc
     Config.distributed = Config.gpu_count > 4 # TODO!
-    model = resnet.resnet50(num_class=2)
+    model = resnet.resnet50(num_class=Config.class_num)
     #if Config.gpu is not None:
     model = model.cuda()
     if Config.gpu_count > 1:
@@ -176,17 +175,19 @@ def main():
     ])
 
     train_loader = DataLoader(ImageFolder(root=train_dir, transform=TRANSFORM_IMG),
-                              batch_size=batch_size, shuffle=True, pin_memory=True)
+                              batch_size=batch_size, shuffle=True, pin_memory=True,
+                              num_workers=workers)
     val_loader = DataLoader(ImageFolder(root=val_dir, transform=TRANSFORM_IMG),
-                            batch_size=batch_size, shuffle=True, pin_memory=True)
+                            batch_size=batch_size, shuffle=True, pin_memory=True,
+                            num_workers=workers)
     test_loader = DataLoader(ImageFolder(root=test_dir, transform=TRANSFORM_IMG),
-                             batch_size=batch_size, shuffle=True, pin_memory=True)
+                             batch_size=batch_size, shuffle=True, pin_memory=True,
+                             num_workers=workers)
 
     for epoch in range(EPOCHS):
         adjust_learing_rate(optimizer, epoch)
         train_losses, train_acc = train_epoch(train_loader, model, criterion, optimizer, epoch)
         val_losses, val_acc = validate(val_loader, model, criterion)
-        #test_acc = validate(test_loader, model, criterion, print_freq=1)
         is_best = val_acc > best_val_acc
         print('>>>>>>>>>>>>>>>>>>>>>>')
         print('train loss: {}, train acc: {}, valid loss: {}, valid acc: {}'.format(train_losses.avg, train_acc.avg,
