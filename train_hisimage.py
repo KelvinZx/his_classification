@@ -19,6 +19,8 @@ import PIL
 from imgaug import augmenters as iaa
 import imgaug as ia
 from tqdm import tqdm
+from gmloss import LGMLoss
+
 
 MAIN_DIR = os.getcwd()
 DATA_DIR = os.path.join(MAIN_DIR, 'breaKHis_patient_binary')
@@ -150,7 +152,8 @@ def main():
     if Config.gpu_count > 1:
         model = torch.nn.DataParallel(model).cuda()
 
-    criterion = nn.CrossEntropyLoss().cuda()
+    #criterion = nn.CrossEntropyLoss().cuda()
+    criterion = LGMLoss(num_classes=Config.out_class, feat_dim=Config.out_class).cuda()
     optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.0001)
 
     train_dir = os.path.join(DATA_DIR, 'train')
@@ -182,7 +185,7 @@ def main():
         val_losses, val_acc = validate(val_loader, model, criterion)
         is_best = val_acc.avg > best_val_acc
         print('>>>>>>>>>>>>>>>>>>>>>>')
-        print('train loss: {}, train acc: {}, valid loss: {}, valid acc: {}'.format(train_losses.avg, train_acc.avg,
+        print('Epoch: {} train loss: {}, train acc: {}, valid loss: {}, valid acc: {}'.format(epoch, train_losses.avg, train_acc.avg,
                                                                                     val_losses.avg, val_acc.avg))
         print('>>>>>>>>>>>>>>>>>>>>>>')
         save_checkpoint({'epoch': epoch + 1,
