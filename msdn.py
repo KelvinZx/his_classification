@@ -20,6 +20,10 @@ class MSDN(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
+        self.downsamplelayer1 = DenseLayer(64, 128, stride=1)
+        self.downsamplelayer2 = DenseLayer(128, 256, stride=2)
+        self.downsamplelayer3 = DenseLayer(256, 512, stride=2)
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -53,9 +57,12 @@ class MSDN(nn.Module):
         x = self.maxpool(x)
 
         x = self.layer1(x)
-        x = self.layer1(x) + self.layer2(x)
-        x = self.layer1(x) + self.layer2(x) + self.layer3(x)
-        x = self.layer1(x) + self.layer2(x) + self.layer3(x) + self.self.layer4(x)
+        x_layer1down = self.downsamplelayer1(x)
+        x = x_layer1down + self.layer2(x)
+        x_layer2down = self.downsamplelayer2(x)
+        x = x_layer2down + self.layer3(x)
+        x_layer3down = self.downsamplelayer3(x)
+        x = x_layer3down + self.self.layer4(x)
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
@@ -64,10 +71,32 @@ class MSDN(nn.Module):
 
         return x
 
+
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=1, bias=False)
+
+
+def conv1x1(in_planes, out_planes, stride=1):
+    """1x1 convolution with padding"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride,
+                     padding=0, bias=False)
+
+
+class DenseLayer(nn.Module):
+    expansion = 1
+
+    def __init__(self, inplanes, planes, stride=1):
+        super(DenseLayer, self).__init__()
+        self.conv1 = conv3x3(inplanes, planes, stride)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.stride = stride
+
+    def forward(self, x):
+        out = self.conv1(x)
+        out = self.bn1(out)
+        return out
 
 
 class BasicBlock(nn.Module):
