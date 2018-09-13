@@ -18,6 +18,9 @@ from torchvision import transforms
 import PIL
 from averagemeter import AverageMeter
 from ncrf import CRFResNet
+import densenet
+from loss import WeightCrossEntropy
+import msdn
 
 MAIN_DIR = os.getcwd()
 DATA_DIR = os.path.join(MAIN_DIR, 'breaKHis_patient_binary')
@@ -107,15 +110,19 @@ def set_model():
     if Config.backbone == 'resnet18':
         model = resnet.resnet18(num_class=Config.out_class)
     if Config.backbone == 'resnet34':
-        model = resnet.resnet34(num_class=Config.out_class)
+        model = resnet.resnet34(num_class=Config.out_class, pretrained=Config.pretrain)
     if Config.backbone == 'resnet50':
-        model = resnet.resnet50(num_class=Config.out_class)
+        model = resnet.resnet50(num_class=Config.out_class, pretrained=Config.pretrain)
     if Config.backbone == 'ncrf18':
-        model = CRFResNet.resnet18(num_class=Config.out_class)
+        model = CRFResNet.resnet18(num_class=Config.out_class, pretrained=Config.pretrain)
     if Config.backbone == 'ncrf34':
-        model = CRFResNet.resnet34(num_class=Config.out_class)
+        model = CRFResNet.resnet34(num_class=Config.out_class, pretrained=Config.pretrain)
     if Config.backbone == 'ncrf50':
-        model = CRFResNet.resnet50(num_class=Config.out_class)
+        model = CRFResNet.resnet50(num_class=Config.out_class, pretrained=Config.pretrain)
+    if Config.backbone == 'densenet121':
+        model = densenet.densenet121(Config.out_class, pretrained=Config.pretrain)
+    if Config.backbone == 'msdn18':
+        model = msdn.msdn18(Config.out_class)
     return model
 
 
@@ -135,6 +142,8 @@ def main():
         model = torch.nn.DataParallel(model).cuda()
 
     criterion = nn.CrossEntropyLoss().cuda()
+    #weights = torch.FloatTensor(np.array([0.7, 0.3])).cuda()
+    #criterion = WeightCrossEntropy(num_classes=Config.out_class, weight=weights).cuda()
     #criterion = LGMLoss(num_classes=Config.out_class, feat_dim=128).cuda()
     optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.0001)
 
@@ -147,8 +156,8 @@ def main():
         #ImageTransform(),
         #lambda x: PIL.Image.fromarray(x),
         transforms.ToTensor(),
-        #transforms.Normalize(mean=[0.485, 0.456, 0.406],
-         #                    std=[0.229, 0.224, 0.225])
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
     ])
 
     train_loader = DataLoader(ImageFolder(root=train_dir, transform=TRANSFORM_IMG),
