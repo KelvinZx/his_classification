@@ -147,3 +147,4 @@ def msdn18(num_class, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = MSDN(BasicBlock, [2, 2, 2, 2], num_classes=num_class, **kwargs)
+    return model
