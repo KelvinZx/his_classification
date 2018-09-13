@@ -20,7 +20,7 @@ class MSDN(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
-        self.downsamplelayer1 = DenseLayer(64, 128, stride=1)
+        self.downsamplelayer1 = DenseLayer(64, 128, stride=2)
         self.downsamplelayer2 = DenseLayer(128, 256, stride=2)
         self.downsamplelayer3 = DenseLayer(256, 512, stride=2)
 
