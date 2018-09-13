@@ -141,9 +141,9 @@ def main():
     if Config.gpu_count > 1:
         model = torch.nn.DataParallel(model).cuda()
 
-    criterion = nn.CrossEntropyLoss().cuda()
-    #weights = torch.FloatTensor(np.array([0.7, 0.3])).cuda()
-    #criterion = WeightCrossEntropy(num_classes=Config.out_class, weight=weights).cuda()
+    #criterion = nn.CrossEntropyLoss().cuda()
+    weights = torch.FloatTensor(np.array([0.7, 0.3])).cuda()
+    criterion = WeightCrossEntropy(num_classes=Config.out_class, weight=weights).cuda()
     #criterion = LGMLoss(num_classes=Config.out_class, feat_dim=128).cuda()
     optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.0001)
 

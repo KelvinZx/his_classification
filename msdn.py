@@ -5,9 +5,11 @@ import math
 
 
 class MSDN(nn.Module):
-    def __init__(self, block, layers, num_classes=1000, **kwargs):
+    def __init__(self, block, layers, num_classes=1000, fc=1, ss=False, **kwargs):
         self.inplanes = 64
         super(MSDN, self).__init__()
+        self.ss = ss
+        self.fc_num = fc
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -58,19 +60,31 @@ class MSDN(nn.Module):
 
         x = self.layer1(x)
         x_layer1down = self.downsamplelayer1(x)
-        x = x_layer1down + self.layer2(x)
+        x_layer2 = x_layer1down + self.layer2(x)
 
-        x_layer2down = self.downsamplelayer2(x)
-        x = x_layer2down + self.layer3(x)
-        x_layer3down = self.downsamplelayer3(x)
-        x = x_layer3down + self.layer4(x)
+        x_layer2down = self.downsamplelayer2(x_layer2)
+        x_layer3 = x_layer2down + self.layer3(x_layer2)
+        x_layer3down = self.downsamplelayer3(x_layer3)
+        x_layer4 = x_layer3down + self.layer4(x_layer3)
 
-        x = self.avgpool(x)
+
+        x = self.avgpool(x_layer4)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
+        if self.fc_num == 2:
+            x = self.fc(x)
         #x = self.softmax(x)
+        if self.ss == True:
+            x_layer2_ss = self.avgpool(x_layer2)
+            x_layer2_ss = x_layer2_ss.view(x_layer2_ss.size(0), -1)
+            x_layer2_ss = self.fc(x_layer2_ss)
 
-        return x
+            x_layer3_ss = self.avgpool(x_layer3)
+            x_layer3_ss = x_layer3_ss.view(x_layer3_ss.size(0), -1)
+            x_layer3_ss = self.fc(x_layer3_ss)
+            return x_layer2_ss, x_layer3_ss, x
+        else:
+            return x
 
 
 def conv3x3(in_planes, out_planes, stride=1):
