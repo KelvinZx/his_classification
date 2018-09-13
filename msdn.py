@@ -66,7 +66,7 @@ class MSDN(nn.Module):
         x_layer2down = self.downsamplelayer2(x)
         x = x_layer2down + self.layer3(x)
         x_layer3down = self.downsamplelayer3(x)
-        x = x_layer3down + self.self.layer4(x)
+        x = x_layer3down + self.layer4(x)
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
