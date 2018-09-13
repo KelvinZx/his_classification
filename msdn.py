@@ -59,8 +59,10 @@ class MSDN(nn.Module):
         x = self.layer1(x)
         print('x.shape: {}'.format(x.shape))
         x_layer1down = self.downsamplelayer1(x)
-        print('x_layer1down.shape: {}'.format(x_layer1down.shape))
+        #print('x_layer1down.shape: {}'.format(x_layer1down.shape))
+        print('x_layer2.shape{} , x_layer1down.shape: {}'.format(self.layer2(x).shape, x_layer1down.shape))
         x = x_layer1down + self.layer2(x)
+
         x_layer2down = self.downsamplelayer2(x)
         x = x_layer2down + self.layer3(x)
         x_layer3down = self.downsamplelayer3(x)
