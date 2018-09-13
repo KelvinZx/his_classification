@@ -16,13 +16,13 @@ model_urls = {
 }
 
 
-def densenet121(pretrained=False, **kwargs):
+def densenet121(num_class,pretrained=False, **kwargs):
     r"""Densenet-121 model from
     `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 24, 16),
+    model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 24, 16), num_classes=num_class,
                      **kwargs)
     if pretrained:
         # '.'s are no longer allowed in module names, but pervious _DenseLayer
@@ -212,9 +212,12 @@ class DenseNet(nn.Module):
             elif isinstance(m, nn.Linear):
                 nn.init.constant_(m.bias, 0)
 
+        self.classes = num_classes
+        self.adaptivepool = nn.AdaptiveAvgPool2d(1)
     def forward(self, x):
         features = self.features(x)
         out = F.relu(features, inplace=True)
-        out = F.avg_pool2d(out, kernel_size=1, stride=1).view(features.size(0), -1)
+        out = self.adaptivepool(out)
+        out = out.view(features.size(0), -1)
         out = self.classifier(out)
         return out

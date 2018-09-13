@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 
 
-class CrossEntropyLabelSmooth(nn.Module):
+class WeightCrossEntropy(nn.Module):
     """Cross entropy loss with label smoothing regularizer.
 
     Reference:
@@ -17,10 +17,11 @@ class CrossEntropyLabelSmooth(nn.Module):
     - epsilon (float): weight.
     """
 
-    def __init__(self, num_classes, epsilon=0.1):
-        super(CrossEntropyLabelSmooth, self).__init__()
+    def __init__(self, num_classes, weight, epsilon=0.1):
+        super(WeightCrossEntropy, self).__init__()
         self.num_classes = num_classes
         self.epsilon = epsilon
+        self.weight = weight
         self.logsoftmax = nn.LogSoftmax(dim=1)
 
     def forward(self, inputs, targets):
@@ -32,6 +33,6 @@ class CrossEntropyLabelSmooth(nn.Module):
         log_probs = self.logsoftmax(inputs)
         targets = torch.zeros(log_probs.size()).scatter_(1, targets.unsqueeze(1).data.cpu(), 1)
         targets = targets.cuda()
-        targets = (1 - self.epsilon) * targets + self.epsilon / self.num_classes
-        loss = (- targets * log_probs).mean(0).sum()
+        targets = (1 - self.epsilon) * targets
+        loss = (- targets * log_probs * self.weight).mean(0).sum()
         return loss

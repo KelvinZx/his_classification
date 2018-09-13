@@ -9,7 +9,7 @@ class Config(object):
     parser.add_argument("--gpu_count", default=1, type=int)
     parser.add_argument("--image_per_gpu", type=int, default=64)
     parser.add_argument("--epoch", default=300, type=int)
-    parser.add_argument("--backbone", default='xception', type=str)
+    parser.add_argument("--backbone", default='resnet18', type=str)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--out_class", default=2, type=int)
     parser.add_argument("--momentum", default=0.9, type=float)
@@ -18,9 +18,12 @@ class Config(object):
                         help='number of data loading workers (default: 4)')
     parser.add_argument("--gpu", default=None, type=str,
                         help='set gpu if no data parallel are using(default: None)')
+    parser.add_argument("--pretrain", default=False, type=bool,
+                        help='set pretrain if pretrained weights are used(Imagenet)')
 
     args = parser.parse_args()
 
+    pretrain = args.pretrain
     resume = args.resume
     momentum = args.momentum
     backbone = args.backbone

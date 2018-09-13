@@ -1,5 +1,6 @@
 from imgaug import augmenters as iaa
 import imgaug as ia
+import numpy as np
 
 class ImageTransform:
     """
