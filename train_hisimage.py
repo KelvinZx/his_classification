@@ -23,7 +23,7 @@ import msdn
 import ncrf
 
 MAIN_DIR = os.getcwd()
-DATA_DIR = os.path.join(MAIN_DIR, 'breaKHis_patient_binary')
+DATA_DIR = os.path.join(MAIN_DIR, 'data_process', 'fold1')
 
 best_val_acc = 0
 best_test_acc = 0
@@ -156,28 +156,28 @@ def main():
     #criterion = LGMLoss(num_classes=Config.out_class, feat_dim=128).cuda()
     optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.0001)
 
-    train_dir = os.path.join(DATA_DIR, 'train')
-    val_dir = os.path.join(DATA_DIR, 'val')
-    test_dir = os.path.join(DATA_DIR, 'test')
+    train_dir = os.path.join(DATA_DIR, 'train', '40X')
+    val_dir = os.path.join(DATA_DIR, 'val', '40X')
+    test_dir = os.path.join(DATA_DIR, 'test', '40X')
 
     TRANSFORM_IMG = transforms.Compose([
-        transforms.Resize((448, 448)),
+        transforms.Resize((700, 460)),
         #ImageTransform(),
         #lambda x: PIL.Image.fromarray(x),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+        transforms.Normalize(mean=[0.5, 0.5, 0.5],
                              std=[0.229, 0.224, 0.225])
     ])
 
     train_loader = DataLoader(ImageFolder(root=train_dir, transform=TRANSFORM_IMG),
                               batch_size=batch_size, shuffle=True, pin_memory=True,
                               num_workers=workers)
-    val_loader = DataLoader(ImageFolder(root=val_dir, transform=TRANSFORM_IMG),
+    val_loader = DataLoader(ImageFolder(root=test_dir, transform=TRANSFORM_IMG),
                             batch_size=batch_size, shuffle=True, pin_memory=True,
                             num_workers=workers)
-    test_loader = DataLoader(ImageFolder(root=test_dir, transform=TRANSFORM_IMG),
-                             batch_size=batch_size, shuffle=True, pin_memory=True,
-                             num_workers=workers)
+    #test_loader = DataLoader(ImageFolder(root=test_dir, transform=TRANSFORM_IMG),
+     #                        batch_size=batch_size, shuffle=True, pin_memory=True,
+      #                       num_workers=workers)
 
     for epoch in range(EPOCHS):
         adjust_learing_rate(optimizer, epoch)
@@ -192,8 +192,8 @@ def main():
                          'state_dict': model.state_dict(),
                          'best_val_acc': best_val_acc,
                          'optimizer': optimizer.state_dict(),}, is_best)
-    _, test_acc = validate(test_loader, model, criterion)
-    print('Test accuracy: {}'.format(test_acc))
+    #_, test_acc = validate(test_loader, model, criterion)
+    #print('Test accuracy: {}'.format(test_acc))
 
 
 if __name__ == '__main__':
