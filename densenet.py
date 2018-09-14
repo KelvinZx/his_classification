@@ -200,8 +200,9 @@ class DenseNet(nn.Module):
         self.features.add_module('norm5', nn.BatchNorm2d(num_features))
 
         # Linear layer
-        self.classifier = nn.Linear(num_features, num_classes)
-
+        self.classifier1 = nn.Linear(num_features, num_classes)
+        self.classifier2 = nn.Linear(num_features, num_classes)
+        self.dropout = nn.Dropout2d(0.7)
         # Official init from torch repo.
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -215,12 +216,16 @@ class DenseNet(nn.Module):
         self.classes = num_classes
         self.adaptivepool = nn.AdaptiveAvgPool2d(1)
         self.softmax = nn.Softmax()
+        self.relulast = nn.ReLU(inplace=True)
 
     def forward(self, x):
         features = self.features(x)
         out = F.relu(features, inplace=True)
         out = self.adaptivepool(out)
         out = out.view(features.size(0), -1)
-        out = self.classifier(out)
+        out = self.classifier1(out)
+        out = self.dropout(out)
+        out = self.relulast(out)
+        out = self.classifier2(out)
         #out = self.softmax(out)
         return out
