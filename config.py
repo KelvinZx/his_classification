@@ -1,6 +1,14 @@
 import argparse
 
 
+def str2bool(command):
+    if command.lower() in ('true'):
+        return True
+    elif command.lower() in ('false'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected')
+
 class Config(object):
     """
     Manually setting configuration.
@@ -18,13 +26,17 @@ class Config(object):
                         help='number of data loading workers (default: 4)')
     parser.add_argument("--gpu", default=None, type=str,
                         help='set gpu if no data parallel are using(default: None)')
-    parser.add_argument("--pretrain", default=False, type=bool,
+    parser.add_argument("--pretrain", default=False, type=str2bool,
                         help='set pretrain if pretrained weights are used(Imagenet)')
+    parser.add_argument("--loss", default='ce', type=str)
+    parser.add_argument("--ss", default=False, type=str2bool)
 
     args = parser.parse_args()
 
     pretrain = args.pretrain
     resume = args.resume
+    ss = args.ss
+    loss = args.loss
     momentum = args.momentum
     backbone = args.backbone
     out_class = args.out_class

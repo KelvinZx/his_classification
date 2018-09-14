@@ -17,10 +17,10 @@ from torchvision.datasets import ImageFolder
 from torchvision import transforms
 import PIL
 from averagemeter import AverageMeter
-from ncrf import CRFResNet
 import densenet
 from loss import WeightCrossEntropy
 import msdn
+import ncrf
 
 MAIN_DIR = os.getcwd()
 DATA_DIR = os.path.join(MAIN_DIR, 'breaKHis_patient_binary')
@@ -61,8 +61,12 @@ def train_epoch(data_loader, model, criterion, optimizer, epoch, print_freq=50):
     for batch_idx, (data, target) in enumerate(data_loader):
         data = data.cuda()
         target = target.cuda()
-        output = model(data)
-        loss = criterion(output, target)
+        if Config.ss == False:
+            output = model(data)
+            loss = criterion(output, target)
+        else:
+            layer2_output, layer3_output, output = model(data)
+            loss = criterion(output, target) + 0.5 * criterion(layer2_output, target) + 0.5 * criterion(layer3_output, target)
         losses.update(loss.item(), data.size(0))
 
         acc = accuracy(output, target)
@@ -90,9 +94,12 @@ def validate(val_loader, model, criterion, print_freq=50):
         for batch_idx, (data, target) in enumerate(val_loader):
             data = data.cuda()
             target = target.cuda()
-
-            output = model(data)
-            loss = criterion(output, target)
+            if Config.ss == False:
+                output = model(data)
+                loss = criterion(output, target)
+            else:
+                layer2_output, layer3_output, output = model(data)
+                loss = criterion(output, target) + 0.5 * criterion(layer2_output, target) + 0.5 * criterion(layer3_output, target)
             losses.update(loss.item(), data.size(0))
 
             acc = accuracy(output, target)
@@ -114,15 +121,17 @@ def set_model():
     if Config.backbone == 'resnet50':
         model = resnet.resnet50(num_class=Config.out_class, pretrained=Config.pretrain)
     if Config.backbone == 'ncrf18':
-        model = CRFResNet.resnet18(num_class=Config.out_class, pretrained=Config.pretrain)
+        model = ncrf.resnet18(num_class=Config.out_class)
     if Config.backbone == 'ncrf34':
-        model = CRFResNet.resnet34(num_class=Config.out_class, pretrained=Config.pretrain)
+        model = ncrf.resnet34(num_class=Config.out_class)
     if Config.backbone == 'ncrf50':
-        model = CRFResNet.resnet50(num_class=Config.out_class, pretrained=Config.pretrain)
+        model = ncrf.resnet50(num_class=Config.out_class)
     if Config.backbone == 'densenet121':
         model = densenet.densenet121(Config.out_class, pretrained=Config.pretrain)
     if Config.backbone == 'msdn18':
-        model = msdn.msdn18(Config.out_class)
+        model = msdn.msdn18(Config.out_class, ss=Config.ss)
+    if Config.backbone == 'msdn34':
+        model = msdn.msdn34(Config.out_class, ss=Config.ss)
     return model
 
 
@@ -152,7 +161,7 @@ def main():
     test_dir = os.path.join(DATA_DIR, 'test')
 
     TRANSFORM_IMG = transforms.Compose([
-        transforms.Resize((700, 460)),
+        transforms.Resize((448, 448)),
         #ImageTransform(),
         #lambda x: PIL.Image.fromarray(x),
         transforms.ToTensor(),
