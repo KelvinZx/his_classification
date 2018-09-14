@@ -215,11 +215,12 @@ class DenseNet(nn.Module):
         self.classes = num_classes
         self.adaptivepool = nn.AdaptiveAvgPool2d(1)
         self.softmax = nn.Softmax()
+
     def forward(self, x):
         features = self.features(x)
         out = F.relu(features, inplace=True)
         out = self.adaptivepool(out)
         out = out.view(features.size(0), -1)
         out = self.classifier(out)
-        out = self.softmax(out)
+        #out = self.softmax(out)
         return out
