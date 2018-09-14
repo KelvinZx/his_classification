@@ -116,7 +116,7 @@ class ResNet(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
-        self.softmax = nn.Softmax(num_classes)
+        self.softmax = nn.Softmax()
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
