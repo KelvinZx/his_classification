@@ -21,6 +21,7 @@ import densenet
 from loss import WeightCrossEntropy
 import msdn
 import ncrf
+from image_transform import ImageTransform
 
 MAIN_DIR = os.getcwd()
 DATA_DIR = os.path.join(MAIN_DIR, 'data_process', 'fold1')
@@ -150,9 +151,9 @@ def main():
     if Config.gpu_count > 1:
         model = torch.nn.DataParallel(model).cuda()
 
-    #criterion = nn.CrossEntropyLoss().cuda()
-    weights = torch.FloatTensor(np.array([0.7, 0.3])).cuda()
-    criterion = WeightCrossEntropy(num_classes=Config.out_class, weight=weights).cuda()
+    criterion = nn.CrossEntropyLoss().cuda()
+    #weights = torch.FloatTensor(np.array([0.7, 0.3])).cuda()
+    #criterion = WeightCrossEntropy(num_classes=Config.out_class, weight=weights).cuda()
     #criterion = LGMLoss(num_classes=Config.out_class, feat_dim=128).cuda()
     optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.0001)
 
@@ -162,7 +163,7 @@ def main():
 
     TRANSFORM_IMG = transforms.Compose([
         transforms.Resize((700, 460)),
-        #ImageTransform(),
+        ImageTransform(),
         #lambda x: PIL.Image.fromarray(x),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5],

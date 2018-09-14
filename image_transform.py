@@ -9,6 +9,7 @@ class ImageTransform:
     def __init__(self):
         self.aug = iaa.Sequential([
             iaa.Fliplr(0.5),
+            iaa.ElasticTransformation(0.1)
         ])
 
     def __call__(self, img):
