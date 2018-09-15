@@ -50,7 +50,7 @@ class FirstScaleLayer(nn.Module):
         num_classes (int) - number of classification classes
     """
 
-    def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
+    def __init__(self, growth_rate=32, block_config=(6, 12, 24),
                  num_init_features=64, bn_size=4, drop_rate=0,num_classes=1000, **kwargs):
 
         super(FirstScaleLayer, self).__init__()
@@ -59,21 +59,7 @@ class FirstScaleLayer(nn.Module):
         self.conv0 = nn.Sequential(OrderedDict([
             ('conv0', nn.Conv2d(3, num_init_features, kernel_size=3, stride=2, padding=1, bias=False))
         ]))
-
-        # Each denseblock
-        self.dense_scale1 = nn.Sequential()
-        self.dense_scale2 = nn.Sequential()
-        self.dense_scale3 = nn.Sequential()
-        self.trans_scale1 = nn.Sequential()
-        self.trans_scale2 = nn.Sequential()
-
-
         self.scales = nn.ModuleList()
-        #self.scales.append(self.dense_scale1)
-        #self.scales.append(self.trans_scale1)
-        #self.scales.append(self.dense_scale2)
-        #self.scales.append(self.trans_scale2)
-        #self.scales.append(self.dense_scale3)
 
 
         num_features = num_init_features
@@ -173,13 +159,12 @@ class _Transition(nn.Sequential):
         self.add_module('relu1', nn.ReLU(inplace=True))
         self.add_module('conv1', nn.Conv2d(num_input_features, num_output_features,
                                           kernel_size=1, stride=1, bias=False))
-        self.add_module('pool', nn.AvgPool2d(kernel_size=2, stride=2))
-        """
         self.add_module('norm2', nn.BatchNorm2d(num_input_features))
         self.add_module('relu2', nn.ReLU(inplace=True))
         self.add_module('conv2', nn.Conv2d(num_input_features, num_output_features,
                                           kernel_size=3, stride=2, padding=3, bias=False))
-"""
+
+
 def msdn18(num_class, drop_rate, pretrained=False, **kwargs):
     r"""Densenet-121 model from
     `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
@@ -189,50 +174,3 @@ def msdn18(num_class, drop_rate, pretrained=False, **kwargs):
     model =FirstScaleLayer(num_init_features=32, growth_rate=32, block_config=(4, 8, 6), num_classes=num_class, drop_rate=drop_rate,
                      **kwargs)
     return model
-"""
-class Transition(nn.Sequential):
-
-    def __init__(self, inchannel, outchannel, out_scales, args, trans_kernel=3):
-
-        super(Transition, self).__init__()
-        self.args = args
-        self.inchannel = inchannel
-        self.outchannel = outchannel
-        self.trans_kernelsize = trans_kernel
-        self.scales = nn.ModuleList()
-        for i in range(1, out_scales):
-            print('transition scale: {}'.format(out_scales))
-            current_inchannel = inchannel
-            current_outchannel = current_inchannel * (2**out_scales)
-            print('at transition scale: {}, inchannel: {}, outchannel: {}'.format(
-                out_scales, current_inchannel, current_outchannel))
-            self.scales.append(self.conv3x3(current_inchannel, current_outchannel))
-
-            inchannel = current_outchannel
-
-        self.out_scales = out_scales
-
-    def conv3x3(self, in_planes, out_planes):
-  
-        scale = nn.Sequential(
-            nn.Conv2d(in_planes, out_planes, kernel_size=self.trans_kernelsize,
-                      stride=2, padding=1),
-            nn.BatchNorm2d(out_planes),
-            nn.ReLU(inplace=True)
-        )
-        return scale
-
-    def forward(self, x):
-        if self.args.debug:
-            print('in tranistion downward!')
-
-        output = []
-        for i, scale_net in enumerate(self.scales):
-            if self.args.debug:
-                print('Size of x[{}]: {}'.format(i, x[i].size()))
-                print('scale_net[0]: {}'.format(scale_net[0]))
-            output.append(scale_net(x[i]))
-
-        return output
-
-"""

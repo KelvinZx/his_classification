@@ -160,7 +160,7 @@ def main():
     test_dir = os.path.join(DATA_DIR, 'test', '40X')
 
     TRANSFORM_IMG = transforms.Compose([
-        transforms.Resize((700, 460)),
+        transforms.Resize((256, 256)),
         ImageTransform(),
         #lambda x: PIL.Image.fromarray(x),
         transforms.ToTensor(),
