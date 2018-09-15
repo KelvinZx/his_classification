@@ -112,15 +112,24 @@ class FirstScaleLayer(nn.Module):
         self.relulast = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        x_conv0 = self.conv0(x)
+        x = self.conv0(x)
         print(self.scales)
+        for i, layer in enumerate(self.scales):
+            x = layer(x)
+            if i == 0:
+                x_dense1 = x
+            elif i == 2:
+                x_dense2 = x
+            elif i == 3:
+                x_dense3 = x
+        """
         x_dense1 = self.scales[1](x_conv0)
         x_trans1 = self.scales[1](x_dense1)
         x_dense2 = self.scales[2](x_trans1)
         x_trans2 = self.scales[3](x_dense2)
         x_dense3 = self.scales[4](x_trans2)
-
-        out = F.relu(x_dense3, inplace=True)
+"""
+        out = F.relu(x, inplace=True)
         out = self.adaptivepool(out)
         out = out.view(out.size(0), -1)
         out = self.classifier1(out)
