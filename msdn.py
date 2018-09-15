@@ -115,6 +115,7 @@ class FirstScaleLayer(nn.Module):
         x = self.conv0(x)
         print(self.scales)
         for i, layer in enumerate(self.scales):
+            print('{}: {}'.format(i, layer))
             x = layer(x)
             if i == 0:
                 x_dense1 = x
