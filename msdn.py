@@ -50,8 +50,8 @@ class FirstScaleLayer(nn.Module):
         num_classes (int) - number of classification classes
     """
 
-    def __init__(self, growth_rate=64, block_config=(2, 2, 2),
-                 num_init_features=32, drop_rate=0, num_classes=1000, **kwargs):
+    def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
+                 num_init_features=64, bn_size=4, drop_rate=0,num_classes=1000, **kwargs):
 
         super(FirstScaleLayer, self).__init__()
 
@@ -82,9 +82,9 @@ class FirstScaleLayer(nn.Module):
             print('block: {} have {} layers with num_input_features: {} output_features: {}'.
                   format(i, num_layers, num_features, growth_rate * (2**(i+1))))
             block = _DenseBlock(num_layers=num_layers, num_input_features=num_features,
-                                num_output_feature=growth_rate * (2**(i+2)),drop_rate=drop_rate)
+                                bn_size=bn_size, growth_rate=growth_rate, drop_rate=drop_rate)
             self.scales.add_module('denseblock%d' % (i + 1), block)
-            num_features = growth_rate * (2**(i+2))
+            num_features = num_features + num_layers * growth_rate
             loop += 1
             print('trans num_features: {}'.format(num_features))
             if i != len(block_config) - 1:
@@ -138,14 +138,15 @@ class FirstScaleLayer(nn.Module):
 
 
 class _DenseLayer(nn.Sequential):
-    def __init__(self, num_input_features, num_output_features, drop_rate):
+    def __init__(self, num_input_features, growth_rate, bn_size, drop_rate):
         super(_DenseLayer, self).__init__()
         self.add_module('norm1', nn.BatchNorm2d(num_input_features)),
         self.add_module('relu1', nn.ReLU(inplace=True)),
-        self.add_module('conv1', nn.Conv2d(num_input_features, num_output_features, kernel_size=1, stride=1, bias=False)),
-        self.add_module('norm2', nn.BatchNorm2d(num_output_features)),
+        self.add_module('conv1', nn.Conv2d(num_input_features, bn_size *
+                        growth_rate, kernel_size=1, stride=1, bias=False)),
+        self.add_module('norm2', nn.BatchNorm2d(bn_size * growth_rate)),
         self.add_module('relu2', nn.ReLU(inplace=True)),
-        self.add_module('conv2', nn.Conv2d(num_output_features, num_output_features,
+        self.add_module('conv2', nn.Conv2d(bn_size * growth_rate, growth_rate,
                         kernel_size=3, stride=1, padding=1, bias=False)),
         self.drop_rate = drop_rate
 
@@ -157,11 +158,11 @@ class _DenseLayer(nn.Sequential):
 
 
 class _DenseBlock(nn.Sequential):
-    def __init__(self, num_layers, num_input_features, num_output_feature, drop_rate):
+    def __init__(self, num_layers, num_input_features, bn_size, growth_rate, drop_rate):
         super(_DenseBlock, self).__init__()
         for i in range(num_layers):
             print('{}th layer at Denseblock has {} input_features'.format(i, num_input_features))
-            layer = _DenseLayer(num_input_features, num_output_feature, drop_rate)
+            layer = _DenseLayer(num_input_features + i * growth_rate, growth_rate, bn_size, drop_rate)
             self.add_module('denselayer%d' % (i + 1), layer)
 
 
