@@ -159,9 +159,11 @@ class _Transition(nn.Sequential):
         self.add_module('relu1', nn.ReLU(inplace=True))
         self.add_module('conv1', nn.Conv2d(num_input_features, num_output_features,
                                           kernel_size=1, stride=1, bias=False))
-        self.add_module('norm2', nn.BatchNorm2d(num_input_features))
+        self.add_module('pool', nn.AvgPool2d(kernel_size=2, stride=2))
+
+        self.add_module('norm2', nn.BatchNorm2d(num_output_features))
         self.add_module('relu2', nn.ReLU(inplace=True))
-        self.add_module('conv2', nn.Conv2d(num_input_features, num_output_features,
+        self.add_module('conv2', nn.Conv2d(num_output_features, num_output_features,
                                           kernel_size=3, stride=2, padding=3, bias=False))
 
 
