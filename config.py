@@ -30,9 +30,10 @@ class Config(object):
                         help='set pretrain if pretrained weights are used(Imagenet)')
     parser.add_argument("--loss", default='ce', type=str)
     parser.add_argument("--ss", default=False, type=str2bool)
+    parser.add_argument("--droprate", default=0, type=float)
 
     args = parser.parse_args()
-
+    drop_rate = args.droprate
     pretrain = args.pretrain
     resume = args.resume
     ss = args.ss

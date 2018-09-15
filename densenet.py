@@ -16,13 +16,13 @@ model_urls = {
 }
 
 
-def densenet121(num_class,pretrained=False, **kwargs):
+def densenet121(num_class, drop_rate, pretrained=False, **kwargs):
     r"""Densenet-121 model from
     `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 24, 16), num_classes=num_class,
+    model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 24, 16), num_classes=num_class, drop_rate=drop_rate,
                      **kwargs)
     if pretrained:
         # '.'s are no longer allowed in module names, but pervious _DenseLayer
@@ -200,7 +200,7 @@ class DenseNet(nn.Module):
         self.features.add_module('norm5', nn.BatchNorm2d(num_features))
 
         # Linear layer
-        self.classifier1 = nn.Linear(num_features, num_features)
+        self.classifier1 = nn.Linear(num_features, num_classes)
         self.classifier2 = nn.Linear(num_features, num_classes)
         self.dropout = nn.Dropout2d(0.7)
         # Official init from torch repo.
@@ -224,8 +224,8 @@ class DenseNet(nn.Module):
         out = self.adaptivepool(out)
         out = out.view(features.size(0), -1)
         out = self.classifier1(out)
-        out = self.dropout(out)
-        out = self.relulast(out)
-        out = self.classifier2(out)
+        #out = self.dropout(out)
+        #out = self.relulast(out)
+        #out = self.classifier2(out)
         #out = self.softmax(out)
         return out
