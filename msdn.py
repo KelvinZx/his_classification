@@ -96,6 +96,7 @@ class FirstScaleLayer(nn.Module):
         self.adaptivepool = nn.AdaptiveAvgPool2d(1)
         self.softmax = nn.Softmax()
         self.relulast = nn.ReLU(inplace=True)
+        self.classifier1 = nn.Linear(num_features, num_classes)
 
     def forward(self, x):
         x = self.conv0(x)
