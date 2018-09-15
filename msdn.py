@@ -65,14 +65,14 @@ class FirstScaleLayer(nn.Module):
         num_features = num_init_features
         loop = 0
         for i, num_layers in enumerate(block_config):
-            print('block: {} have {} layers with num_input_features: {} output_features: {}'.
+            #print('block: {} have {} layers with num_input_features: {} output_features: {}'.
                   format(i, num_layers, num_features, growth_rate * (2**(i+1))))
             block = _DenseBlock(num_layers=num_layers, num_input_features=num_features,
                                 bn_size=bn_size, growth_rate=growth_rate, drop_rate=drop_rate)
             self.scales.add_module('denseblock%d' % (i + 1), block)
             num_features = num_features + num_layers * growth_rate
             loop += 1
-            print('trans num_features: {}'.format(num_features))
+            #print('trans num_features: {}'.format(num_features))
             if i != len(block_config) - 1:
                 trans = _Transition(num_input_features=num_features, num_output_features=num_features // 2)
                 self.scales.add_module('transition%d' % (i + 1), trans)
@@ -100,9 +100,9 @@ class FirstScaleLayer(nn.Module):
 
     def forward(self, x):
         x = self.conv0(x)
-        print(self.scales)
+        #print(self.scales)
         for i, layer in enumerate(self.scales):
-            print('{}: {}'.format(i, layer))
+            #print('{}: {}'.format(i, layer))
             x = layer(x)
             if i == 0:
                 x_dense1 = x
@@ -148,7 +148,7 @@ class _DenseBlock(nn.Sequential):
     def __init__(self, num_layers, num_input_features, bn_size, growth_rate, drop_rate):
         super(_DenseBlock, self).__init__()
         for i in range(num_layers):
-            print('{}th layer at Denseblock has {} input_features'.format(i, num_input_features))
+            #print('{}th layer at Denseblock has {} input_features'.format(i, num_input_features))
             layer = _DenseLayer(num_input_features + i * growth_rate, growth_rate, bn_size, drop_rate)
             self.add_module('denselayer%d' % (i + 1), layer)
 
