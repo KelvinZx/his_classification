@@ -66,7 +66,7 @@ class FirstScaleLayer(nn.Module):
         loop = 0
         for i, num_layers in enumerate(block_config):
             #print('block: {} have {} layers with num_input_features: {} output_features: {}'.
-                  format(i, num_layers, num_features, growth_rate * (2**(i+1))))
+                  #format(i, num_layers, num_features, growth_rate * (2**(i+1))))
             block = _DenseBlock(num_layers=num_layers, num_input_features=num_features,
                                 bn_size=bn_size, growth_rate=growth_rate, drop_rate=drop_rate)
             self.scales.add_module('denseblock%d' % (i + 1), block)
