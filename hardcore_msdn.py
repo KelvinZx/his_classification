@@ -8,32 +8,50 @@ from config import Config
 
 
 class MSDNet(nn.Module):
-    def __init__(self, depth, num_init_features, growth_rate, num_classes,
-                 drop_rate, block_config=(4, 8, 6), **kwargs):
+    def __init__(self, depth=3, num_classes=2,
+                 drop_rate=0, growth_rate=32, num_init_features=64,
+                 bn_size=4, block_config=(4, 8, 6), **kwargs):
         super(MSDNet, self).__init__()
         self.net = nn.ModuleList()
-        self.first_layer = FirstScaleLayer(num_init_features=32, growth_rate=32,
-                                           block_config=(4, 8, 6), num_classes=num_classes,
-                                           drop_rate=drop_rate, **kwargs)
-        self.classifier = _Classifier(32, 1024, num_classes)
-        self.net.add_module('Scale_Layer', self.first_layer)
-        self.depth_module = nn.ModuleList()
-        self.scaledown = nn.ModuleList()
-        self.scale_size = len(block_config)
+        self.depth_num = depth
+        self.scale_num = len(block_config)
+        self.conv0 = nn.Conv2d(3, num_init_features, kernel_size=3, stride=2, padding=1, bias=False)
+
         num_features = num_init_features
 
-        self.depth = depth
-        self.depth1_scale1_para = _ResidualLayer(32, 32)
-        self.depth2_scale1_para = _ResidualLayer(64, 64)
+        self.dense_block1 = _DenseBlock(num_layers=block_config[0], num_input_features=num_init_features,
+                                bn_size=bn_size, growth_rate=growth_rate, drop_rate=drop_rate)
+        num_features = num_features + block_config[0] * growth_rate
+        self.dense_bottle1 = _BottleNeck(num_features, num_features//2)
+        self.dense_trans1 = _Transition(num_features//2)
 
-        self.depth1_scale1_bottle = _BottleNeck(160, 80)
-        self.depth1_scale2_bottle = _BottleNeck(336, 168)
-        self.depth1_scale3_bottle = _BottleNeck(336, 168)
+        self.cross_dense1 = nn.Sequential(
+            _BottleNeck(num_features, num_features // 2),
+            _Transition(num_features // 2)
+        )
+        num_features = num_features // 2
 
-        self.depth2_scale1_cat = _TwoResidualLayer(80, 128)
-        self.depth1_scale2_cat = _TwoResidualLayer(168, 336)
+        self.dense_block2 = _DenseBlock(num_layers=block_config[1], num_input_features=num_features,
+                                bn_size=bn_size, growth_rate=growth_rate, drop_rate=drop_rate)
+        num_features = num_features + block_config[1] * growth_rate
+        self.dense_bottle2 = _BottleNeck(num_features, num_features // 2)
+        self.dense_trans2 = _Transition(num_features // 2)
 
+        self.cross_dense2 = nn.Sequential(
+            _BottleNeck(num_features, num_features // 2),
+            _Transition(num_features // 2)
+        )
+        self.parallel_dense2 = _ParallelTransition(num_features // 2)
+        num_features = num_features // 2
+        self.dense_block3 = _DenseBlock(num_layers=block_config[2], num_input_features=num_features,
+                                        bn_size=bn_size, growth_rate=growth_rate, drop_rate=drop_rate)
+        self.dense_bottle3 = _BottleNeck(num_features, num_features // 2)
 
+        self.parallel_dense3 = _ParallelTransition(num_features // 2)
+
+        #self.depth1_scale2_down =
+        #self.dense1_crxdown = _
+        self.binary_classifier = _Classifier(30, 4096, 2)
     def init_weights(self, m):
         if isinstance(m, nn.Conv2d):
             nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -44,41 +62,36 @@ class MSDNet(nn.Module):
             nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
-        x = self.first_layer(x)
-        x_dense1, x_dense2, x_dense3 = x[0], x[1], x[2]
+        x = self.conv0(x)
+        x_dense1 = self.dense_block1(x)
 
-        print('x_dense1: {}, x_dense2: {}, x_dense3: {}'.format(x_dense1.shape, x_dense2.shape, x_dense3.shape))
-        x_depth1_scale1_bottle = self.depth1_scale1_bottle(x_dense1)
-        x_depth1_scale2_bottle = self.depth1_scale2_bottle(x_dense2)
-        x_depth1_scale3_bottle = self.depth1_scale3_bottle(x_dense3)
-        print('Bottle: x_depth1_scale1 {}, x_depth1_scale2 {}, x_depth1_scale3 {}'.format(x_depth1_scale1_bottle.shape,
-                                                                                          x_depth1_scale2_bottle.shape,
-                                                                                          x_depth1_scale3_bottle.shape))
+        x_dense1_bottle = self.dense_bottle1(x_dense1)
+        x_dense1_trans = self.dense_trans1(x_dense1_bottle)
+
+        x_dense2 = self.dense_block2(x_dense1_trans)
+
+        x_dense2_bottle = self.dense_bottle2(x_dense2)
+        x_dense2_trans = self.dense_trans2(x_dense2_bottle)
+
+        x_dense3 = self.dense_block3(x_dense2_bottle)
+        x_dense3_bottle = self.dense_bottle3(x_dense3)
+
+        x_dense1_cross = self.cross_dense1(x_dense1)
+        x_dense2_cross = self.cross_dense2(x_dense2)
+
+        x_dense2_parallel = self.parallel_dense2(x_dense2_bottle)
+        x_dense3_parallel = self.parallel_dense3(x_dense3_bottle)
+
+        x_depth1_scale2 = torch.cat([x_dense1_cross, x_dense2_parallel, x_dense2], dim=1)
+        x_depth1_scale3 = torch.cat([x_dense2_cross, x_dense3_parallel, x_dense3], dim=1)
 
 
-
-        x_depth1_scale1_parallel = self.depth1_scale1_para(x_dense1)
-        x_depth2_scale1_parallel = self.depth2_scale1_para(x_dense1)
-        print('x_depth1_scale1_paralle: {} and x_depth2_scale1_parallel: {}'.format(x_depth1_scale1_parallel, x_depth2_scale1_parallel))
+        #### reuse x_dense1, x_dense2, x_dense3
 
 
+        binary_out = self.classifier1(x_depth1_scale3)#(x_depth2_scale3)
 
-        x_depth1_scale2_cat = self.depth1_scale1_cat([x_depth1_scale1_bottle, x_dense2])
-        print('x_depth1_scale2_cat: {}'.format(x_depth1_scale2_cat.shape))
-
-
-
-        print('x_depth1_scale1 bottle: {}, x_depth1_scale1')
-        #x_dense2_scale1
-        x_depth2_scale1 = self.depth2_scale1(x_dense2)
-
-        x_depth1_scale2 = self.depth1_scale2
-        #x_depth1_scale3
-
-        #x_depth2_scale3 =
-        out = self.classifier(x_depth1_scale3_bottle)#(x_depth2_scale3)
-
-        return out
+        return binary_out
 
 
 class _Classifier(nn.Module):
@@ -111,14 +124,12 @@ class FirstScaleLayer(nn.Module):
     """
 
     def __init__(self, growth_rate=32, block_config=(6, 12, 24),
-                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000, **kwargs):
+                 num_init_features=32, bn_size=2, drop_rate=0, num_classes=1000, **kwargs):
 
         super(FirstScaleLayer, self).__init__()
 
         # First convolution
-        self.conv0 = nn.Sequential(OrderedDict([
-            ('scale1_conv0', nn.Conv2d(3, num_init_features, kernel_size=3, stride=2, padding=1, bias=False))
-        ]))
+        self.conv0 = nn.Conv2d(3, num_init_features, kernel_size=3, stride=2, padding=1, bias=False)
         self.scales = nn.ModuleList()
 
         num_features = num_init_features
@@ -210,6 +221,19 @@ class _TwoResidualLayer(nn.Module):
         return x_cat
 
 
+class _ParallelTransition(nn.Sequential):
+    def __init__(self, num_input_features):
+        super(_ParallelTransition, self).__init__()
+        self.add_module('norm1', nn.BatchNorm2d(num_input_features))
+        self.add_module('relu1', nn.ReLU(inplace=True))
+        self.add_module('conv1', nn.Conv2d(num_input_features, num_input_features,
+                                           kernel_size=1, stride=1, padding=0, bias=False))
+        self.add_module('norm2', nn.BatchNorm2d(num_input_features))
+        self.add_module('relu2', nn.ReLU(inplace=True))
+        self.add_module('conv2', nn.Conv2d(num_input_features,num_input_features,
+                                           kernel_size=3, stride=1, padding=1, bias=False))
+
+
 class _DenseLayer(nn.Sequential):
     def __init__(self, num_input_features, growth_rate, bn_size, drop_rate):
         super(_DenseLayer, self).__init__()
@@ -263,7 +287,7 @@ def msdn18(num_class, drop_rate, pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = MSDNet(depth=3, num_init_features=32, growth_rate=32, block_config=(4, 8, 6), num_classes=num_class,
+    model = MSDNet(growth_rate=32, block_config=(4, 8, 6), num_classes=num_class,
                             drop_rate=drop_rate,
                             **kwargs)
     return model
