@@ -76,7 +76,7 @@ class MSDNet(nn.Module):
         #x_depth1_scale3
 
         #x_depth2_scale3 =
-        out = self.classifier(x)#(x_depth2_scale3)
+        out = self.classifier(x_depth1_scale3_bottle)#(x_depth2_scale3)
 
         return out
 
