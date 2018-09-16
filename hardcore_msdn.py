@@ -263,7 +263,7 @@ def msdn18(num_class, drop_rate, pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = MSDNet(num_init_features=32, growth_rate=32, block_config=(4, 8, 6), num_classes=num_class,
+    model = MSDNet(depth=3, num_init_features=32, growth_rate=32, block_config=(4, 8, 6), num_classes=num_class,
                             drop_rate=drop_rate,
                             **kwargs)
     return model
