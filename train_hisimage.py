@@ -22,6 +22,7 @@ from loss import WeightCrossEntropy
 import msdn
 import ncrf
 from image_transform import ImageTransform
+import hardcore_msdn
 
 MAIN_DIR = os.getcwd()
 DATA_DIR = os.path.join(MAIN_DIR, 'data_process', 'fold1')
@@ -130,7 +131,7 @@ def set_model():
     if Config.backbone == 'densenet121':
         model = densenet.densenet121(Config.out_class, pretrained=Config.pretrain, drop_rate=Config.drop_rate)
     if Config.backbone == 'msdn18':
-        model = msdn.msdn18(Config.out_class, ss=Config.ss, drop_rate=Config.drop_rate)
+        model = hardcore_msdn.msdn18(Config.out_class, ss=Config.ss, drop_rate=Config.drop_rate)
     return model
 
 
