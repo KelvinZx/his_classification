@@ -19,7 +19,7 @@ class MSDNet(nn.Module):
         self.net.add_module('Scale_Layer', self.first_layer)
         self.depth_module = nn.ModuleList()
         self.scaledown = nn.ModuleList()
-        self.scale_size = block_config.size()
+        self.scale_size = len(block_config)
         num_features = num_init_features
 
         self.depth = depth
