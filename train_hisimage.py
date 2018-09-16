@@ -54,7 +54,7 @@ def accuracy(output, target):
     return percent_acc
 
 
-def train_epoch(data_loader, model, criterion, optimizer, epoch, print_freq=50):
+def train_epoch(data_loader, model, criterion, optimizer, epoch, print_freq=10000):
     losses = AverageMeter()
     percent_acc = AverageMeter()
     model.train()
@@ -87,7 +87,7 @@ def train_epoch(data_loader, model, criterion, optimizer, epoch, print_freq=50):
     return losses, percent_acc
 
 
-def validate(val_loader, model, criterion, print_freq=50):
+def validate(val_loader, model, criterion, print_freq=10000):
     model.eval()
     losses = AverageMeter()
     percent_acc = AverageMeter()
