@@ -53,7 +53,7 @@ class MSDNet(nn.Module):
 
         #self.depth1_scale2_down =
         #self.dense1_crxdown = _
-        self.binary_classifier = _Classifier(728, 728, 2)
+        self.binary_classifier = _Classifier(1288, 1288, 2)
         self.binary_softmax = nn.Softmax(dim=1)
     def init_weights(self, m):
         if isinstance(m, nn.Conv2d):
