@@ -33,8 +33,9 @@ class WeightCrossEntropy(nn.Module):
         log_probs = self.logsoftmax(inputs)
         targets = torch.zeros(log_probs.size()).scatter_(1, targets.unsqueeze(1).data.cpu(), 1)
         targets = targets.cuda()
+        smooth = torch.pow(inputs, 0.5)
         targets = (1 - self.epsilon) * targets
-        loss = (- targets * log_probs * self.weight).mean(0).sum()
+        loss = (- targets * log_probs * self.weight* smooth).mean(0).sum()
         return loss
 
 
