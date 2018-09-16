@@ -22,7 +22,7 @@ class WeightCrossEntropy(nn.Module):
         self.num_classes = num_classes
         self.epsilon = epsilon
         self.weight = weight
-        self.logsoftmax = nn.LogSoftmax(dim=1)
+        self.logsoftmax = nn.Softmax(dim=1)
 
     def forward(self, inputs, targets):
         """
