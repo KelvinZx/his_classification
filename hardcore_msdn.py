@@ -43,8 +43,10 @@ class MSDNet(nn.Module):
         )
         self.parallel_dense2 = _ParallelTransition(num_features // 2)
         num_features = num_features // 2
+
         self.dense_block3 = _DenseBlock(num_layers=block_config[2], num_input_features=num_features,
                                         bn_size=bn_size, growth_rate=growth_rate, drop_rate=drop_rate)
+        num_features = num_features + block_config[2] * growth_rate
         self.dense_bottle3 = _BottleNeck(num_features, num_features // 2)
 
         self.parallel_dense3 = _ParallelTransition(num_features // 2)
