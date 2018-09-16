@@ -30,8 +30,9 @@ class WeightCrossEntropy(nn.Module):
         - inputs: prediction matrix (before softmax) with shape (batch_size, num_classes)
         - targets: ground truth labels with shape (num_classes)
         """
-        inputs = inputs.clamp(min=self.epsilon, max=1.0-self.epsilon)
+
         log_probs = self.logsoftmax(inputs)
+        log_probs = log_probs.clamp(min=self.epsilon, max=1.0 - self.epsilon)
         targets = torch.zeros(log_probs.size()).scatter_(1, targets.unsqueeze(1).data.cpu(), 1)
         targets = targets.cuda()
         #smooth = torch.pow(inputs, 0.5)
