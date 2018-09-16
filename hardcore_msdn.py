@@ -53,7 +53,8 @@ class MSDNet(nn.Module):
 
         #self.depth1_scale2_down =
         #self.dense1_crxdown = _
-        self.binary_classifier = _Classifier(30, 4096, 2)
+        self.binary_classifier = _Classifier(728, 1024, 2)
+        self.binary_softmax = nn.Softmax(dim=1)
     def init_weights(self, m):
         if isinstance(m, nn.Conv2d):
             nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -91,7 +92,8 @@ class MSDNet(nn.Module):
         #### reuse x_dense1, x_dense2, x_dense3
 
 
-        binary_out = self.classifier1(x_depth1_scale3)#(x_depth2_scale3)
+        binary_out = self.binary_classifier(x_depth1_scale3)#(x_depth2_scale3)
+        binary_out = self.binary_softmax(binary_out)
 
         return binary_out
 
