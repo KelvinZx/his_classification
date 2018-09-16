@@ -88,7 +88,7 @@ class MSDNet(nn.Module):
         x_depth1_scale2 = torch.cat([x_dense1_cross, x_dense2_parallel, x_dense2], dim=1)
         x_depth1_scale3 = torch.cat([x_dense2_cross, x_dense3_parallel, x_dense3], dim=1)
 
-        print('x_depth1_scale3.shape: {}'.format(x_depth1_scale3.shape))
+        #print('x_depth1_scale3.shape: {}'.format(x_depth1_scale3.shape))
         #### reuse x_dense1, x_dense2, x_dense3
 
 
