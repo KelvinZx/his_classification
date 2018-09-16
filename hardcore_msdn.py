@@ -93,7 +93,7 @@ class MSDNet(nn.Module):
 
 
         binary_out = self.binary_classifier(x_depth1_scale3)#(x_depth2_scale3)
-        binary_out = self.binary_softmax(binary_out)
+        #binary_out = self.binary_softmax(binary_out)
 
         return binary_out
 
@@ -291,7 +291,7 @@ def msdn18(num_class, drop_rate, pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = MSDNet(growth_rate=32, block_config=(4, 8, 6), num_classes=num_class,
+    model = MSDNet(growth_rate=32, block_config=(4, 10, 16), num_classes=num_class,
                             drop_rate=drop_rate,
                             **kwargs)
     return model
