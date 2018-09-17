@@ -26,7 +26,7 @@ import hardcore_msdn
 import alexnet
 
 MAIN_DIR = os.getcwd()
-DATA_DIR = os.path.join(MAIN_DIR, 'data_process', 'fold1')
+DATA_DIR = os.path.join(MAIN_DIR, 'data_process', 'fold3')
 
 best_val_acc = 0
 best_test_acc = 0
