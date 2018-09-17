@@ -5,7 +5,7 @@ import os
 from config import Config
 import cv2
 ROOT = os.getcwd()
-DATA_DIR = os.path.join(ROOT, 'data_process', 'fold3da')
+DATA_DIR = os.path.join(ROOT, 'data_process', 'fold3')
 
 class ImageTransform:
     """
