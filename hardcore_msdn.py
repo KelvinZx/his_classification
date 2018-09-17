@@ -53,7 +53,13 @@ class MSDNet(nn.Module):
 
         #self.depth1_scale2_down =
         #self.dense1_crxdown = _
-        self.binary_classifier = _Classifier(1288, 1288, 2)
+        self.x_depth2_scale2_down = nn.Sequential(
+            _BottleNeck(720, 720// 2),
+            _Transition(720 // 2)
+        )
+
+        self.depth1_scale3_para = _ParallelTransition(1288)
+        self.binary_classifier = _Classifier(2936, 2936, 2)
         self.binary_softmax = nn.Softmax()
     def init_weights(self, m):
         if isinstance(m, nn.Conv2d):
@@ -88,12 +94,17 @@ class MSDNet(nn.Module):
         x_depth1_scale2 = torch.cat([x_dense1_cross, x_dense2_parallel, x_dense2], dim=1)
         x_depth1_scale3 = torch.cat([x_dense2_cross, x_dense3_parallel, x_dense3], dim=1)
 
+
+        x_depth1_scale2_cross = self.x_depth2_scale2_down(x_depth1_scale2)
+        x_depth1_scale3_parallel = self.depth1_scale3_para(x_depth1_scale3)
+
+        x_depth2_scale3 = torch.cat([x_depth1_scale3, x_depth1_scale2_cross, x_depth1_scale3_parallel], dim=1)
         #print('x_depth1_scale3.shape: {}'.format(x_depth1_scale3.shape))
         #### reuse x_dense1, x_dense2, x_dense3
 
-
-        binary_out = self.binary_classifier(x_depth1_scale3)#(x_depth2_scale3)
-        binary_out = self.binary_softmax(binary_out)
+        #print(x_depth2_scale3.shape)
+        binary_out = self.binary_classifier(x_depth2_scale3)#(x_depth2_scale3)
+        #binary_out = self.binary_softmax(binary_out)
 
         return binary_out
 

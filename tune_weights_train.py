@@ -33,7 +33,7 @@ best_test_acc = 0
 
 
 def adjust_learing_rate(opt, epoch):
-    lr = Config.lr - 0.0000 #reduce 10 percent every 50 epoch
+    lr = Config.lr - 0.0000  # reduce 10 percent every 50 epoch
     for param_group in opt.param_groups:
         param_group['lr'] = lr
 
@@ -51,7 +51,7 @@ def accuracy(output, target):
         _, predicted = torch.max(output.data, 1)
         total += target.size(0)
         correct += (predicted == target).sum().item()
-    percent_acc = 100 * correct/total
+    percent_acc = 100 * correct / total
     return percent_acc
 
 
@@ -69,7 +69,8 @@ def train_epoch(data_loader, model, criterion, optimizer, epoch, print_freq=1000
             loss = criterion(output, target)
         else:
             layer2_output, layer3_output, output = model(data)
-            loss = criterion(output, target) + 0.5 * criterion(layer2_output, target) + 0.5 * criterion(layer3_output, target)
+            loss = criterion(output, target) + 0.5 * criterion(layer2_output, target) + 0.5 * criterion(layer3_output,
+                                                                                                        target)
         losses.update(loss.item(), data.size(0))
 
         acc = accuracy(output, target)
@@ -84,7 +85,7 @@ def train_epoch(data_loader, model, criterion, optimizer, epoch, print_freq=1000
         if batch_idx % print_freq == 0:
             print('Training Round: {}, Time: {}'.format(batch_idx, np.round(time_end, 2)))
             print('Training Loss: val:{} avg:{} Acc: val:{} avg:{}'.format(losses.val, losses.avg,
-                                                                  percent_acc.val, percent_acc.avg))
+                                                                           percent_acc.val, percent_acc.avg))
     return losses, percent_acc
 
 
@@ -102,7 +103,8 @@ def validate(val_loader, model, criterion, print_freq=10000):
                 loss = criterion(output, target)
             else:
                 layer2_output, layer3_output, output = model(data)
-                loss = criterion(output, target) + 0.5 * criterion(layer2_output, target) + 0.5 * criterion(layer3_output, target)
+                loss = criterion(output, target) + 0.5 * criterion(layer2_output, target) + 0.5 * criterion(
+                    layer3_output, target)
             losses.update(loss.item(), data.size(0))
 
             acc = accuracy(output, target)
@@ -112,7 +114,7 @@ def validate(val_loader, model, criterion, print_freq=10000):
             if batch_idx % print_freq == 0:
                 print('Validation Round: {}, Time: {}'.format(batch_idx, np.round(time_end, 2)))
                 print('Validation Loss: val:{} avg:{} Acc: val:{} avg:{}'.format(losses.val, losses.avg,
-                                                                      percent_acc.val, percent_acc.avg))
+                                                                                 percent_acc.val, percent_acc.avg))
     return losses, percent_acc
 
 
@@ -138,6 +140,13 @@ def set_model():
     return model
 
 
+def tune_weights():
+    weight = [np.array([0.4, 0.6]), np.array([0.6, 0.4]), np.array([0.7, 0.3]),
+              np.array([0.8, 0.2]),
+              np.array([0.9, 0.1]), np.array([0.1, 0.9]), np.array([0.2, 0.8]), ]
+    return weight
+
+
 def main():
     cudnn.benchmark = True
     batch_size = Config.gpu_count * Config.image_per_gpu
@@ -145,28 +154,28 @@ def main():
 
     workers = Config.workers
     global best_val_acc, best_test_acc
-    Config.distributed = Config.gpu_count > 4 # TODO!
+    Config.distributed = Config.gpu_count > 4  # TODO!
 
     model = set_model()
-    #if Config.gpu is not None:
+    # if Config.gpu is not None:
     model = model.cuda()
     if Config.gpu_count > 1:
         model = torch.nn.DataParallel(model).cuda()
 
     criterion = nn.CrossEntropyLoss().cuda()
-    #weights = torch.FloatTensor(np.array([0.7, 0.3])).cuda()
-    #criterion = WeightCrossEntropy(num_classes=Config.out_class, weight=weights).cuda()
-    #criterion = LGMLoss(num_classes=Config.out_class, feat_dim=128).cuda()
-    optimizer = SGD(model.parameters(), lr=Config.lr, momentum=0.9,nesterov=True, weight_decay=0.0001)
-    #optimizer = Adam(model.parameters())
+    # weights = torch.FloatTensor(np.array([0.7, 0.3])).cuda()
+    # criterion = WeightCrossEntropy(num_classes=Config.out_class, weight=weights).cuda()
+    # criterion = LGMLoss(num_classes=Config.out_class, feat_dim=128).cuda()
+    optimizer = SGD(model.parameters(), lr=Config.lr, momentum=0.9, nesterov=True, weight_decay=0.0001)
+    # optimizer = Adam(model.parameters())
     train_dir = os.path.join(DATA_DIR, 'train', '40X')
     val_dir = os.path.join(DATA_DIR, 'val', '100X')
     test_dir = os.path.join(DATA_DIR, 'test', '40X')
 
     TRANSFORM_IMG = transforms.Compose([
         transforms.Resize((256, 256)),
-        #ImageTransform(),
-        #lambda x: PIL.Image.fromarray(x),
+        # ImageTransform(),
+        # lambda x: PIL.Image.fromarray(x),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5],
                              std=[0.2, 0.2, 0.2])
@@ -178,25 +187,32 @@ def main():
     val_loader = DataLoader(ImageFolder(root=test_dir, transform=TRANSFORM_IMG),
                             batch_size=batch_size, shuffle=True, pin_memory=True,
                             num_workers=workers)
-    #test_loader = DataLoader(ImageFolder(root=test_dir, transform=TRANSFORM_IMG),
-     #                        batch_size=batch_size, shuffle=True, pin_memory=True,
-      #                       num_workers=workers)
-
-    for epoch in range(EPOCHS):
-        adjust_learing_rate(optimizer, epoch)
-        train_losses, train_acc = train_epoch(train_loader, model, criterion, optimizer, epoch)
-        val_losses, val_acc = validate(val_loader, model, criterion)
-        is_best = val_acc.avg > best_val_acc
-        print('>>>>>>>>>>>>>>>>>>>>>>')
-        print('Epoch: {} train loss: {}, train acc: {}, valid loss: {}, valid acc: {}'.format(epoch, train_losses.avg, train_acc.avg,
-                                                                                    val_losses.avg, val_acc.avg))
-        print('>>>>>>>>>>>>>>>>>>>>>>')
-        save_checkpoint({'epoch': epoch + 1,
-                         'state_dict': model.state_dict(),
-                         'best_val_acc': best_val_acc,
-                         'optimizer': optimizer.state_dict(),}, is_best)
-    #_, test_acc = validate(test_loader, model, criterion)
-    #print('Test accuracy: {}'.format(test_acc))
+    # test_loader = DataLoader(ImageFolder(root=test_dir, transform=TRANSFORM_IMG),
+    #                        batch_size=batch_size, shuffle=True, pin_memory=True,
+    #                       num_workers=workers)
+    weights_list = tune_weights()
+    for j, weightss in enumerate(weights_list):
+        weights = torch.FloatTensor(weightss).cuda()
+        criterion = WeightCrossEntropy(num_classes=Config.out_class, weight=weights).cuda()
+        print('Weights for loss: {}'.format(weightss))
+        for epoch in range(EPOCHS):
+            adjust_learing_rate(optimizer, epoch)
+            train_losses, train_acc = train_epoch(train_loader, model, criterion, optimizer, epoch)
+            val_losses, val_acc = validate(val_loader, model, criterion)
+            is_best = val_acc.avg > best_val_acc
+            print('>>>>>>>>>>>>>>>>>>>>>>')
+            print(
+                'Epoch: {} train loss: {}, train acc: {}, valid loss: {}, valid acc: {}'.format(epoch, train_losses.avg,
+                                                                                                train_acc.avg,
+                                                                                                val_losses.avg,
+                                                                                                val_acc.avg))
+            print('>>>>>>>>>>>>>>>>>>>>>>')
+            save_checkpoint({'epoch': epoch + 1,
+                             'state_dict': model.state_dict(),
+                             'best_val_acc': best_val_acc,
+                             'optimizer': optimizer.state_dict(), }, is_best)
+    # _, test_acc = validate(test_loader, model, criterion)
+    # print('Test accuracy: {}'.format(test_acc))
 
 
 if __name__ == '__main__':
