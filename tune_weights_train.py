@@ -26,7 +26,7 @@ import hardcore_msdn
 import alexnet
 
 MAIN_DIR = os.getcwd()
-DATA_DIR = os.path.join(MAIN_DIR, 'data_process', 'fold1')
+DATA_DIR = os.path.join(MAIN_DIR, 'data_process', 'fold3')
 
 best_val_acc = 0
 best_test_acc = 0
@@ -141,7 +141,7 @@ def set_model():
 
 
 def tune_weights():
-    weight = [np.array([0.4, 0.6]), np.array([0.6, 0.4]), np.array([0.7, 0.3]),
+    weight = [np.array([0.7, 0.3]), np.array([0.4, 0.6]), np.array([0.6, 0.4]), np.array([0.7, 0.3]),
               np.array([0.8, 0.2]),
               np.array([0.9, 0.1]), np.array([0.1, 0.9]), np.array([0.2, 0.8]), ]
     return weight
@@ -208,6 +208,7 @@ def main():
                                                                                                 val_acc.avg))
             print('>>>>>>>>>>>>>>>>>>>>>>')
             save_checkpoint({'epoch': epoch + 1,
+                             'weight': weightss,
                              'state_dict': model.state_dict(),
                              'best_val_acc': best_val_acc,
                              'optimizer': optimizer.state_dict(), }, is_best)

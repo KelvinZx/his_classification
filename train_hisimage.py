@@ -160,7 +160,7 @@ def main():
     optimizer = SGD(model.parameters(), lr=Config.lr, momentum=0.9,nesterov=True, weight_decay=0.0001)
     #optimizer = Adam(model.parameters())
     train_dir = os.path.join(DATA_DIR, 'train', '40X')
-    val_dir = os.path.join(DATA_DIR, 'val', '100X')
+    val_dir = os.path.join(DATA_DIR, 'val', '40X')
     test_dir = os.path.join(DATA_DIR, 'test', '40X')
 
     TRANSFORM_IMG = transforms.Compose([
